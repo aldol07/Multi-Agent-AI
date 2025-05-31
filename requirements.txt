@@ -1,0 +1,17 @@
+python-dotenv
+requests
+PyPDF2
+pydantic
+fastapi
+uvicorn
+python-multipart
+streamlit
+langchain
+langchain-openai
+langchain-community
+python-magic
+unstructured
+pypdf
+email-validator
+jq
+redis

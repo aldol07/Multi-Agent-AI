@@ -7,13 +7,13 @@ import requests
 from dotenv import load_dotenv
 import re
 
-# Load environment variables
+
 load_dotenv()
 
-# Verify API key is present
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-if not OPENROUTER_API_KEY:
-    raise ValueError("OPENROUTER_API_KEY not found in environment variables. Please check your .env file.")
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY not found in environment variables. Please check your .env file.")
 
 class DocumentClassification(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -50,42 +50,71 @@ class TextAnalysis(BaseModel):
 
 class LangChainAgent:
     def __init__(self):
-        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GOOGLE_API_KEY}"
         self.headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": os.getenv("SITE_URL", "http://localhost:8501"),
-            "X-Title": os.getenv("SITE_NAME", "Multi-Agent AI System")
+            "Content-Type": "application/json"
         }
-        self.model = "deepseek/deepseek-r1:free"
     
     def _call_api(self, prompt: str) -> str:
-        """Make API call to OpenRouter."""
+        """Make API call to Google Gemini."""
         try:
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": prompt
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.3,
+                    "topK": 1,
+                    "topP": 1,
+                    "maxOutputTokens": 2048,
+                    "stopSequences": []
+                },
+                "safetySettings": [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    }
+                ]
+            }
+            
             response = requests.post(
                 url=self.api_url,
                 headers=self.headers,
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "temperature": 0.3
-                }
+                json=payload
             )
             response.raise_for_status()
             
-            # Log the raw response for debugging
+           
             logging.debug(f"API Response: {response.text}")
             
             response_data = response.json()
-            if not response_data.get("choices"):
-                raise Exception("No choices in API response")
+            
+            if not response_data.get("candidates"):
+                raise Exception("No candidates in API response")
+            
+            candidate = response_data["candidates"][0]
+            if not candidate.get("content") or not candidate["content"].get("parts"):
+                raise Exception("No content in API response")
                 
-            content = response_data["choices"][0]["message"]["content"]
+            content = candidate["content"]["parts"][0]["text"]
             if not content:
                 raise Exception("Empty content in API response")
                 
@@ -103,16 +132,16 @@ class LangChainAgent:
     
     def _parse_json_response(self, response: str) -> Dict[str, Any]:
         """Parse JSON response with error handling, removing markdown."""
-        # Use regex to find JSON content within markdown code blocks
+        
         match = re.search(r'```json\n(.*?)\n```', response, re.DOTALL)
         if match:
             json_string = match.group(1)
         else:
-            # If no markdown block is found, assume the whole response is JSON
+            
             json_string = response
             
         try:
-            # Try to parse the extracted string as JSON
+           
             return json.loads(json_string)
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse JSON response: {str(e)}")
@@ -208,14 +237,14 @@ Remember to respond with ONLY the JSON object, no additional text. If any field 
     def process_document(self, doc: Any) -> Dict[str, Any]:
         """Process a document using appropriate chain."""
         try:
-            # First, classify the document
+           
             classifier_prompt = self._create_classifier_prompt(doc.page_content)
             classifier_response = self._call_api(classifier_prompt)
             classification = self._parse_json_response(classifier_response)
             
             logging.info(f"Document classified as: {classification['format']} with intent: {classification['intent']}")
             
-            # Process based on format
+            
             if classification["format"] == "JSON":
                 json_prompt = self._create_json_prompt(doc.page_content)
                 json_response = self._call_api(json_prompt)
@@ -280,4 +309,4 @@ Remember to respond with ONLY the JSON object, no additional text. If any field 
                 "intent": "UNKNOWN",
                 "confidence": 0.0,
                 "analysis": {"error": str(e)}
-            } 
+            }

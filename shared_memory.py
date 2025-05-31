@@ -116,7 +116,7 @@ class SharedMemory:
         # Store in history
         history = self.get_recent_history(100) or []
         history.insert(0, data)
-        self.backend.store("history", history[:100])  # Keep last 100 entries
+        self.backend.store("history", history[:100]) 
 
     def get_recent_history(self, limit: int = 5) -> List[Dict[str, Any]]:
         """Get recent processing history."""
@@ -141,7 +141,6 @@ class SharedMemory:
         self.backend.delete(f"extracted:{source_id}")
         self.backend.delete(f"thread:{source_id}")
 
-# Factory function to create shared memory instance
 def create_shared_memory(backend_type: str = "in_memory", **kwargs) -> SharedMemory:
     """
     Create a shared memory instance with the specified backend.

@@ -45,14 +45,14 @@ class DocumentLoader:
                     json_str = file_content.decode('utf-8')
                     json_data = json.loads(json_str)
                     
-                    # Create a temporary file for JSON
+                    
                     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
                         json.dump(json_data, temp_file)
                         temp_file.flush()
                         temp_path = temp_file.name
                     
                     try:
-                        # Load JSON using the temporary file
+                       
                         loader = JSONLoader(
                             file_path=temp_path,
                             jq_schema='.',
@@ -61,7 +61,7 @@ class DocumentLoader:
                         docs = loader.load()
                         return docs
                     finally:
-                        # Ensure cleanup happens even if loading fails
+                        
                         try:
                             os.unlink(temp_path)
                         except Exception as e:
@@ -70,26 +70,26 @@ class DocumentLoader:
                     raise ValueError(f"Invalid JSON format: {str(e)}")
             
             elif file_type == 'txt':
-                # Decode content first
+                
                 content = file_content.decode('utf-8')
                 
-                # Check if it's an email
+                
                 if '@' in content and ('Subject:' in content or 'From:' in content):
-                    # For email content, we'll use TextLoader with custom processing
+                    
                     with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
                         temp_file.write(content)
                         temp_file.flush()
                         temp_path = temp_file.name
                     
                     try:
-                        # Use TextLoader for email content
+                       
                         loader = TextLoader(temp_path, encoding='utf-8')
                         docs = loader.load()
                         
-                        # Add email metadata
+                        
                         for doc in docs:
                             doc.metadata['type'] = 'EMAIL'
-                            # Extract basic email metadata
+                            
                             lines = doc.page_content.split('\n')
                             for line in lines:
                                 if line.startswith('From:'):
@@ -99,7 +99,7 @@ class DocumentLoader:
                         
                         return docs
                     finally:
-                        # Ensure cleanup happens even if loading fails
+                        
                         try:
                             os.unlink(temp_path)
                         except Exception as e:

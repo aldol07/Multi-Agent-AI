@@ -75,8 +75,8 @@ pip install -r requirements.txt
 3. Set up environment variables:
 Create a `.env` file with:
 ```
-DEEPSEEK_API_KEY=your_api_key_here
-REDIS_URL=redis://localhost:6379
+OPENROUTER_API_KEY=your_api_key_here
+REDIS_URL=redis://localhost:8501
 ```
 
 4. Run the application:
@@ -87,39 +87,13 @@ streamlit run app.py
 ## Project Structure
 ```
 .
-├── app/
-│   ├── agents/
-│   │   ├── classifier_agent.py
-│   │   ├── json_agent.py
-│   │   └── email_agent.py
-│   ├── memory/
-│   │   └── shared_memory.py
-│   ├── models/
-│   │   └── schemas.py
-│   └── main.py
-├── samples/
-│   ├── emails/
-│   ├── pdfs/
-│   └── json/
+├── app.py
+│----shared_memory.py
+│── document-loader.py
+├── langchain_agent.py
 ├── requirements.txt
 └── README.md
 ```
-
-## Submission Requirements
-
-### Mandatory
-- Working video demo showcasing:
-  - Document upload and processing
-  - Agent classification and routing
-  - Memory storage and retrieval
-  - Error handling
-
-### GitHub Repository
-- Complete source code
-- README.md with setup instructions
-- Sample input files in `/samples` directory
-- Clear folder structure
-- Requirements.txt with all dependencies
 
 ## Features
 - Multi-format document processing

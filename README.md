@@ -76,7 +76,7 @@ pip install -r requirements.txt
 Create a `.env` file with:
 ```
 OPENROUTER_API_KEY=your_api_key_here
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:8501
 ```
 
 4. Run the application:
